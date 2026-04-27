@@ -18,3 +18,4 @@ pymupdf
 pypdf
 requests
 sentence-transformers
+pandas
