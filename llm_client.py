@@ -23,7 +23,20 @@ def call_llm(prompt):
 
         res = requests.post(GROQ_URL, headers=headers, json=payload)
 
-        return res.json()["choices"][0]["message"]["content"]
+        # 🔍 Convert response safely
+        data = res.json()
+
+        # ✅ SUCCESS CASE
+        if "choices" in data:
+            return data["choices"][0]["message"]["content"]
+
+        # ❌ API ERROR CASE
+        elif "error" in data:
+            return f"Error: {data['error']['message']}"
+
+        # ❌ UNKNOWN RESPONSE
+        else:
+            return f"Unexpected response: {data}"
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Exception: {str(e)}"
