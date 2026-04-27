@@ -75,7 +75,7 @@ if query:
             for d in docs
         ))
 
-        st.write("### Sources")
+        # st.write("### Sources")
 
         # cleaner UI display
         st.markdown("**Source Documents:**")

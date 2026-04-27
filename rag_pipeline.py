@@ -1,27 +1,54 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+# -------------------------
+# CHUNKING (improved)
+# -------------------------
 def chunk_documents(docs):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100
+        chunk_size=800,        # increased for better context
+        chunk_overlap=150      # better continuity between chunks
     )
     return splitter.split_documents(docs)
 
 
-def retrieve_docs(vectorstore, query, k=4):
+# -------------------------
+# RETRIEVAL (optimized)
+# -------------------------
+def retrieve_docs(vectorstore, query, k=3):
     docs = vectorstore.similarity_search(query, k=k)
-    return docs
+
+    # optional: remove duplicate content chunks
+    seen = set()
+    unique_docs = []
+
+    for d in docs:
+        text = d.page_content.strip()
+        if text not in seen:
+            seen.add(text)
+            unique_docs.append(d)
+
+    return unique_docs
 
 
+# -------------------------
+# PROMPT (strong + structured)
+# -------------------------
 def build_prompt(context, question):
     return f"""
-Answer using only the context.
+You are a precise AI assistant for document Q&A.
 
-Context:
-{context}
+RULES:
+- Answer ONLY using the given context.
+- Do NOT repeat the question.
+- Do NOT continue incomplete sentences.
+- If answer is not in context, say exactly: "Not found in context"
+- Keep answer clear, short, and structured (3-5 lines max).
 
-Question:
+QUESTION:
 {question}
 
-If not found say "Not found in context"
+CONTEXT:
+{context}
+
+FINAL ANSWER:
 """
