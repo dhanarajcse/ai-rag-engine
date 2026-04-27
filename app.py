@@ -10,7 +10,11 @@ st.title("🤖 RAG Chatbot")
 # -------------------------
 # Upload Files
 # -------------------------
-files = st.file_uploader("Upload files", type=["pdf", "txt", "csv"], accept_multiple_files=True)
+files = st.file_uploader(
+    "Upload files",
+    type=["pdf", "txt", "csv"],
+    accept_multiple_files=True
+)
 
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
@@ -29,7 +33,13 @@ if files:
         else:
             loader = CSVLoader(file.name)
 
-        docs.extend(loader.load())
+        loaded_docs = loader.load()
+
+        # ✅ FIX: ensure source metadata is set
+        for d in loaded_docs:
+            d.metadata["source"] = file.name
+
+        docs.extend(loaded_docs)
 
     chunks = chunk_documents(docs)
 
@@ -57,6 +67,16 @@ if query:
         st.write("### Answer")
         st.write(answer)
 
+        # -------------------------
+        # FIX: REMOVE DUPLICATE SOURCES
+        # -------------------------
+        sources = sorted(set(
+            d.metadata.get("source", "file")
+            for d in docs
+        ))
+
         st.write("### Sources")
-        for d in docs:
-            st.caption(d.metadata.get("source", "file"))
+
+        # cleaner UI display
+        st.markdown("**Source Documents:**")
+        st.write(", ".join(sources))
