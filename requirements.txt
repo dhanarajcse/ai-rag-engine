@@ -6,3 +6,5 @@ faiss-cpu
 sentence-transformers
 pymupdf
 requests
+pypdf
+torch
