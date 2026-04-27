@@ -13,30 +13,44 @@ def call_llm(prompt):
         }
 
         payload = {
-            "model": "llama3-8b-8192",
+            "model": "llama-3.1-8b-instant",
             "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that answers based on provided context."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
             ],
             "temperature": 0.3
         }
 
-        res = requests.post(GROQ_URL, headers=headers, json=payload)
+        # 🚀 Add timeout for Streamlit stability
+        res = requests.post(
+            GROQ_URL,
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
 
-        # 🔍 Convert response safely
+        # 🔍 Parse response safely
         data = res.json()
 
         # ✅ SUCCESS CASE
-        if "choices" in data:
+        if "choices" in data and len(data["choices"]) > 0:
             return data["choices"][0]["message"]["content"]
 
         # ❌ API ERROR CASE
-        elif "error" in data:
-            return f"Error: {data['error']['message']}"
+        if "error" in data:
+            return f"Groq Error: {data['error'].get('message', data['error'])}"
 
         # ❌ UNKNOWN RESPONSE
-        else:
-            return f"Unexpected response: {data}"
+        return f"Unexpected response: {data}"
+
+    except requests.exceptions.Timeout:
+        return "Error: Request timeout. Please try again."
 
     except Exception as e:
         return f"Exception: {str(e)}"
