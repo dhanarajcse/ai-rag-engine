@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import tempfile
 
 from rag_pipeline import chunk_documents, retrieve_docs, build_prompt
@@ -34,12 +33,11 @@ if files:
     csv_file_path = None
 
     for file in files:
-        # ✅ Use temp file (avoids overwrite + safer in cloud)
+        # temp file (safe for cloud)
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             tmp.write(file.getvalue())
             file_path = tmp.name
 
-        # Load based on file type
         if file.name.endswith(".pdf"):
             loader = PyPDFLoader(file_path)
 
@@ -48,24 +46,21 @@ if files:
 
         elif file.name.endswith(".csv"):
             loader = CSVLoader(file_path)
-            csv_file_path = file_path   # ✅ store CSV path
+            csv_file_path = file_path  # store CSV
 
         else:
             continue
 
         loaded_docs = loader.load()
 
-        # Add metadata
         for d in loaded_docs:
             d.metadata["source"] = file.name
 
         docs.extend(loaded_docs)
 
-    # Create vector store
     chunks = chunk_documents(docs)
     st.session_state.vectorstore = create_vectorstore(chunks)
 
-    # Save CSV file path
     st.session_state.csv_file = csv_file_path
 
     st.success("Documents processed successfully!")
@@ -81,14 +76,24 @@ if query:
     else:
         with st.spinner("Thinking..."):
 
+            csv_path = st.session_state.get("csv_file")
+
             # -------------------------
-            # SMART ROUTING (CSV vs RAG)
+            # STRONG CSV DETECTION
             # -------------------------
-            if st.session_state.get("csv_file") and any(
+            is_csv_query = any(
                 word in query.lower()
-                for word in ["total", "sum", "show", "list", "all"]
-            ):
-                answer = handle_csv_query(query, st.session_state.csv_file)
+                for word in [
+                    "total", "sum", "average", "count",
+                    "show", "list", "all", "rows", "column"
+                ]
+            )
+
+            # -------------------------
+            # ROUTING
+            # -------------------------
+            if csv_path and is_csv_query:
+                answer = handle_csv_query(query, csv_path)
                 sources = ["CSV Data"]
 
             else:
@@ -102,7 +107,6 @@ if query:
 
                 answer = call_llm(prompt)
 
-                # Deduplicate sources
                 sources = sorted(set(
                     d.metadata.get("source", "file")
                     for d in docs
