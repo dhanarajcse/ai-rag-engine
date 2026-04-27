@@ -1,48 +1,61 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # -------------------------
-# CHUNKING (improved)
+# CHUNKING (balanced for text + tables)
 # -------------------------
 def chunk_documents(docs):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,        # increased for better context
-        chunk_overlap=150      # better continuity between chunks
+        chunk_size=1200,      # balanced (not too big, not too small)
+        chunk_overlap=150,
+        separators=["\n\n", "\n", " ", ""]
     )
     return splitter.split_documents(docs)
 
 
 # -------------------------
-# RETRIEVAL (optimized)
+# RETRIEVAL (clean + relevant)
 # -------------------------
-def retrieve_docs(vectorstore, query, k=3):
-    docs = vectorstore.similarity_search(query, k=k)
+def retrieve_docs(vectorstore, query, k=6):
+    results = vectorstore.similarity_search_with_score(query, k=k)
 
-    # optional: remove duplicate content chunks
+    # sort by similarity score (lower is better)
+    results.sort(key=lambda x: x[1])
+
+    docs = []
     seen = set()
-    unique_docs = []
 
-    for d in docs:
-        text = d.page_content.strip()
+    for doc, _ in results:
+        text = doc.page_content.strip()
+
+        # remove duplicates
         if text not in seen:
             seen.add(text)
-            unique_docs.append(d)
+            docs.append(doc)
 
-    return unique_docs
+    return docs
 
 
 # -------------------------
-# PROMPT (strong + structured)
+# PROMPT (table + text optimized)
 # -------------------------
 def build_prompt(context, question):
     return f"""
-You are a precise AI assistant for document Q&A.
+You are a highly accurate AI assistant.
 
-RULES:
-- Answer ONLY using the given context.
-- Do NOT repeat the question.
-- Do NOT continue incomplete sentences.
-- If answer is not in context, say exactly: "Not found in context"
-- Keep answer clear, short, and structured (3-5 lines max).
+The provided context may contain:
+- plain text
+- tabular data (rows/columns like CSV or tables)
+
+INSTRUCTIONS:
+- Use ONLY the given context
+- If data exists, DO NOT say "Not found"
+- Carefully match keys (e.g., Ride No → Earnings)
+- Do NOT skip rows in tables
+- Do NOT mix multiple answers
+- Provide a clear and complete answer
+
+IF NOT FOUND:
+Return exactly: Not found in context
 
 QUESTION:
 {question}
