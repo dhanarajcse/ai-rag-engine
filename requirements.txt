@@ -1,12 +1,20 @@
+# streamlit
+# langchain
+# langchain-community
+# langchain-huggingface
+# faiss-cpu
+# sentence-transformers
+# pymupdf
+# requests
+# pypdf
+# torch
+# torchvision
+
 streamlit
-
-langchain==0.2.14
+langchain
 langchain-community
-langchain-huggingface
-
 faiss-cpu
-sentence-transformers
-
 pymupdf
 pypdf
 requests
+sentence-transformers
