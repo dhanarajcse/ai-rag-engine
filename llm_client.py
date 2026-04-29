@@ -3,13 +3,15 @@ import requests
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
+# ✅ Reuse session (faster API calls)
+session = requests.Session()
+
 def call_llm(prompt):
     try:
-        # ✅ Safe secret access
-        api_key = st.secrets.get("GROQ_API_KEY", None)
+        api_key = st.secrets.get("GROQ_API_KEY")
 
         if not api_key:
-            return "❌ Missing GROQ_API_KEY in Streamlit secrets"
+            return "❌ GROQ_API_KEY not found in Streamlit secrets"
 
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -22,9 +24,10 @@ def call_llm(prompt):
                 {
                     "role": "system",
                     "content": (
-                        "You are an intelligent assistant. "
-                        "Answer ONLY using provided context. "
-                        "If not available, say 'Not found in context'."
+                        "You are a precise RAG assistant. "
+                        "Answer ONLY from the given context. "
+                        "Do not hallucinate. "
+                        "If answer is missing, say: 'Not found in context'."
                     )
                 },
                 {
@@ -32,44 +35,49 @@ def call_llm(prompt):
                     "content": prompt
                 }
             ],
-            "temperature": 0.2,   # 🔽 slightly lower = more accurate RAG answers
-            "max_tokens": 512     # 🔥 prevents overly long responses
+            "temperature": 0.2,
+            "max_tokens": 512,
+            "top_p": 0.9
         }
 
-        # 🚀 API call with timeout
-        res = requests.post(
+        # 🚀 API call (reused session)
+        res = session.post(
             GROQ_URL,
             headers=headers,
             json=payload,
             timeout=30
         )
 
-        # 🔍 Try parsing JSON safely
-        try:
-            data = res.json()
-        except Exception:
-            return f"❌ Invalid API response: {res.text}"
-
-        # ❌ HTTP error handling
+        # ❌ Handle HTTP errors early
         if res.status_code != 200:
-            return f"❌ Groq API Error {res.status_code}: {data}"
+            try:
+                error_data = res.json()
+            except Exception:
+                error_data = res.text
+            return f"❌ Groq API Error {res.status_code}: {error_data}"
 
-        # ✅ SUCCESS
-        if isinstance(data, dict) and "choices" in data:
-            return data["choices"][0]["message"]["content"].strip()
+        # ✅ Parse JSON
+        data = res.json()
 
-        # ❌ API ERROR RESPONSE
-        if isinstance(data, dict) and "error" in data:
+        # ✅ Extract safely
+        choices = data.get("choices")
+        if choices and len(choices) > 0:
+            return choices[0].get("message", {}).get("content", "").strip()
+
+        # ❌ API error format
+        if "error" in data:
             return f"❌ Groq Error: {data['error'].get('message', data['error'])}"
 
-        # ❌ UNKNOWN RESPONSE
-        return f"❌ Unexpected response format: {data}"
+        return f"❌ Unexpected response: {data}"
 
     except requests.exceptions.Timeout:
         return "❌ Request timeout. Please try again."
 
+    except requests.exceptions.ConnectionError:
+        return "❌ Connection error. Check internet or API availability."
+
     except requests.exceptions.RequestException as e:
-        return f"❌ Network error: {str(e)}"
+        return f"❌ Request error: {str(e)}"
 
     except Exception as e:
         return f"❌ Unexpected error: {str(e)}"

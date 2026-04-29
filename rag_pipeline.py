@@ -1,67 +1,90 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
 # -------------------------
-# CHUNKING (balanced for text + tables)
+# CHUNKING (stable + context-safe)
 # -------------------------
 def chunk_documents(docs):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1200,      # balanced (not too big, not too small)
-        chunk_overlap=150,
-        separators=["\n\n", "\n", " ", ""]
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", "\n", ".", " ", ""]
     )
     return splitter.split_documents(docs)
 
 
 # -------------------------
-# RETRIEVAL (clean + relevant)
+# RETRIEVAL (HYBRID + FALLBACK)
 # -------------------------
-def retrieve_docs(vectorstore, query, k=6):
-    results = vectorstore.similarity_search_with_score(query, k=k)
+def retrieve_docs(vectorstore, query, k=8):
+    query_lower = query.lower().strip()
+    query_words = query_lower.split()
 
-    # sort by similarity score (lower is better)
-    results.sort(key=lambda x: x[1])
+    # 🔥 Step 1: get large candidate pool
+    results = vectorstore.similarity_search(query, k=20)
 
-    docs = []
+    keyword_docs = []
+    partial_docs = []
+    semantic_docs = []
+
+    for doc in results:
+        text = doc.page_content.lower()
+
+        # ✅ STRONG MATCH (all words present)
+        if all(word in text for word in query_words):
+            keyword_docs.append(doc)
+
+        # ✅ PARTIAL MATCH (any word present)
+        elif any(word in text for word in query_words):
+            partial_docs.append(doc)
+
+        # ✅ PURE SEMANTIC
+        else:
+            semantic_docs.append(doc)
+
+    # 🔥 Priority order (VERY IMPORTANT)
+    combined = keyword_docs + partial_docs + semantic_docs
+
+    # 🔥 Remove duplicates
     seen = set()
+    final_docs = []
 
-    for doc, _ in results:
-        text = doc.page_content.strip()
+    for doc in combined:
+        content = doc.page_content.strip()
 
-        # remove duplicates
-        if text not in seen:
-            seen.add(text)
-            docs.append(doc)
+        if content not in seen:
+            seen.add(content)
+            final_docs.append(doc)
 
-    return docs
+        if len(final_docs) >= k:
+            break
+
+    return final_docs
 
 
 # -------------------------
-# PROMPT (table + text optimized)
+# PROMPT (strict but practical)
 # -------------------------
 def build_prompt(context, question):
     return f"""
-You are a highly accurate AI assistant.
+You are a precise document-based AI assistant.
 
-The provided context may contain:
-- plain text
-- tabular data (rows/columns like CSV or tables)
+RULES:
+- Answer ONLY using the provided context
+- If definition exists, return it clearly
+- Do NOT miss key terms or lines
+- Do NOT combine unrelated content
+- Keep answer short (2–4 lines)
 
-INSTRUCTIONS:
-- Use ONLY the given context
-- If data exists, DO NOT say "Not found"
-- Carefully match keys (e.g., Ride No → Earnings)
-- Do NOT skip rows in tables
-- Do NOT mix multiple answers
-- Provide a clear and complete answer
-
-IF NOT FOUND:
-Return exactly: Not found in context
-
-QUESTION:
-{question}
+IMPORTANT:
+- If relevant information exists → answer it
+- Only say "Not found in context" if nothing relevant is present
 
 CONTEXT:
 {context}
 
-FINAL ANSWER:
+QUESTION:
+{question}
+
+ANSWER:
 """
