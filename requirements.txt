@@ -5,5 +5,8 @@ faiss-cpu
 pymupdf
 pypdf
 requests
-sentence-transformers==2.2.2
 pandas
+
+sentence-transformers==2.7.0
+transformers==4.41.2
+torch==2.2.2
