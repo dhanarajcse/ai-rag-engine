@@ -33,10 +33,4 @@ def run_agent(query, vectorstore, rag_fn):
     """
     rag_fn: function(query, vectorstore) -> (answer, sources)
     """
-    tool = decide_tool(query)
-
-    if tool == "RAG":
-        return rag_fn(query, vectorstore)
-
-    # Fallback
     return rag_fn(query, vectorstore)
