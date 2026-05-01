@@ -1,36 +1,48 @@
-import streamlit as st
-from llm_client import call_llm
-
-# -------------------------
-# DECIDE WHICH TOOL TO USE
-# -------------------------
-def decide_tool(query: str) -> str:
-    router_prompt = f"""
-You are a router.
-
-Decide the best tool for the user query.
-
-Available tools:
-1. RAG → for answering questions from uploaded documents (PDF, TXT, CSV-as-text)
-
-Rules:
-- If the question requires information from documents → return: RAG
-- Otherwise → return: RAG
-
-Return ONLY one word: RAG
-
-Query:
-{query}
-"""
-    decision = call_llm(router_prompt)
-    return (decision or "").strip().upper()
+from tools import rag_tool, summarize_tool, general_tool
 
 
-# -------------------------
-# AGENT EXECUTION
-# -------------------------
-def run_agent(query, vectorstore, rag_fn):
-    """
-    rag_fn: function(query, vectorstore) -> (answer, sources)
-    """
-    return rag_fn(query, vectorstore)
+def decide_tool(query: str, has_docs: bool) -> str:
+    query_lower = query.lower().strip()
+
+    summary_words = [
+        "summarize",
+        "summary",
+        "overview",
+        "brief",
+        "short notes",
+        "main points",
+        "key points"
+    ]
+
+    general_words = [
+        "who are you",
+        "what can you do",
+        "help",
+        "hello",
+        "hi"
+    ]
+
+    if any(word in query_lower for word in summary_words):
+        return "SUMMARY"
+
+    if any(word in query_lower for word in general_words):
+        return "GENERAL"
+
+    if has_docs:
+        return "RAG"
+
+    return "GENERAL"
+
+
+def run_agent(query, vectorstore, all_docs):
+    has_docs = vectorstore is not None and len(all_docs) > 0
+
+    tool = decide_tool(query, has_docs)
+
+    if tool == "SUMMARY":
+        return summarize_tool(all_docs)
+
+    if tool == "GENERAL":
+        return general_tool(query)
+
+    return rag_tool(query, vectorstore, all_docs)
