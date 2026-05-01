@@ -1,13 +1,25 @@
-# Virtual environment
+# Virtual environments
 venv/
 .env/
+.venv/
+env/
 
 # Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
 # Streamlit secrets
 .streamlit/secrets.toml
+
+# Local data and generated indexes
+data/
+faiss_index/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
 
 # OS files
 .DS_Store
