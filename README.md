@@ -2,7 +2,7 @@
 
 An **Agentic RAG (Retrieval-Augmented Generation)** chatbot that allows users to upload documents and interact with them using natural language.
 
-Built with **Streamlit, LangChain, FAISS, Hugging Face Embeddings, and Groq LLM**, this app delivers fast, context-aware answers from your data.
+Built with **Streamlit, LangChain, FAISS, Hugging Face Embeddings, and Groq LLM**, this app delivers fast, context-aware answers from our data.
 
 ---
 
