@@ -1,109 +1,104 @@
 🤖 AI RAG Engine — Intelligent Document Chat Assistant
 
-    Ask questions from your documents and get accurate, context-aware AI responses powered by Retrieval-Augmented Generation.
+An Agentic RAG (Retrieval-Augmented Generation) chatbot that lets users upload documents and interact with them using natural language.
+
+Built with Streamlit, LangChain, FAISS, Hugging Face embeddings, and Groq LLM, this app provides fast, context-aware answers from your data.
+
 
 🚀 Live Demo
-    https://ai-rag-engine.streamlit.app
-
-📸 Demo Preview
+👉 https://ai-rag-engine.streamlit.app/
 
 
-⚡ Features
+✨ Key Features
+📄 Upload multiple PDF/TXT documents
+💬 Ask questions based on document content
+🧠 Context-aware responses using RAG pipeline
+🔍 Semantic search with FAISS vector store
+⚡ Fast inference using Groq LLM
+📌 Source-aware answers for transparency
 
-    📄 Upload multiple documents (PDF, TXT, CSV)
-    💬 Chat with your documents in natural language
-    🧠 AI-powered contextual answers (RAG pipeline)
-    🔍 Semantic search using FAISS vector database
-    📚 Source-based responses for transparency
-    📊 Handles large documents efficiently
-    🧹 Clear chat history option
 
-🏗️ System Architecture
-    User Query
-        ↓
-    Streamlit UI
-        ↓
-    Document Loader (PDF / TXT / CSV)
-        ↓
-    Text Chunking (LangChain)
-        ↓
-    Embeddings (Sentence Transformers)
-        ↓
-    FAISS Vector Store
-        ↓
-    Top-K Retrieval
-        ↓
-    LLM (Groq / OpenAI)
-        ↓
-    Final Answer + Sources
+🧠 Agent-Based Query Routing
 
-🧰 Tech Stack
+The system includes a lightweight agent layer to intelligently route queries:
 
-    🐍 Python
-    🎈 Streamlit
-    🧠 LangChain
-    📦 FAISS (Vector Database)
-    🤗 Sentence Transformers
-    ⚡ Groq / OpenAI API
-    📄 PyMuPDF / PyPDF
+RAG Tool → Answers document-based questions
+Summarize Tool → Generates summaries
+General Tool → Handles non-document queries
+
+
+🏗️ Architecture Overview
+User Query
+   ↓
+Streamlit UI
+   ↓
+Agent Router
+   ↓
+Tool Selection (RAG / Summary / General)
+   ↓
+Document Processing → Chunking → Embeddings
+   ↓
+FAISS Vector Store → Context Retrieval
+   ↓
+Groq LLM
+   ↓
+Final Answer + Sources
+
+
+🛠️ Tech Stack
+
+Python 3.11
+Streamlit
+LangChain
+FAISS
+Hugging Face Transformers
+Sentence Transformers
+Groq API
+PyMuPDF / PyPDF
 
 📁 Project Structure
-        ai-rag-engine/
-    │
-    ├── app.py                  # Streamlit UI
-    ├── rag_pipeline.py         # RAG logic (retrieval + prompts)
-    ├── vector_store.py        # FAISS vector store setup
-    ├── llm_client.py          # LLM API integration
-    ├── requirements.txt
-    │
-    ├── .streamlit/
-    │   └── secrets.toml       # API keys (not pushed to GitHub)
-    │
-    ├── assets/
-    │   └── demo.png           # screenshots
-    │
-    └── README.md
 
-⚙️ Installation (Local Setup)
-    1. Clone repository
-        git clone https://github.com/your-username/ai-rag-engine.git
-        cd ai-rag-engine
+ai-rag-engine/
+│
+├── app.py # Streamlit UI (main entry point)
+├── agent.py # Agent logic (decision-making / tool routing)
+├── tools.py # Custom tools used by the agent
+├── rag_pipeline.py # RAG pipeline (retrieval + prompt handling)
+├── vector_store.py # FAISS vector database setup
+├── llm_client.py # LLM API integration
+├── requirements.txt # Project dependencies
+├── README.md # Project documentation
+    
 
-    2. Create virtual environment
-        python -m venv venv
-        venv\Scripts\activate   # Windows
+⚙️ Setup & Installation
+git clone https://github.com/your-username/ai-rag-engine.git
+cd ai-rag-engine
 
-    3. Install dependencies
-        pip install -r requirements.txt
+python -m venv venv
+venv\Scripts\activate   # Windows
 
-    🔐 Environment Setup
-        Create .streamlit/secrets.toml
-        GROQ_API_KEY = "your_api_key_here"
+pip install -r requirements.txt
 
-    ▶️ Run Application
-        streamlit run app.py
 
-    ☁️ Deployment (Streamlit Cloud)
-        Push code to GitHub
-        Go to https://streamlit.io/cloud
-        Create new app
-        Add repository
-        Add secrets:
-                GROQ_API_KEY = "xxx"
+🔐 Configuration
 
-    Deploy 🚀
+Create a file:
+.streamlit/secrets.toml
 
-    🧠 How It Works
+Add your Groq API key:
+GROQ_API_KEY = "your_groq_api_key_here"
 
-        User uploads documents
-        Documents are split into chunks
-        Embeddings are generated
-        FAISS stores vectors
-        User asks a question
-        Relevant chunks are retrieved
-        LLM generates answer using context
+▶️ Run Locally
+streamlit run app.py
 
-    👨‍💻 Author
+☁️ Deployment (Streamlit Cloud)
+1. Push code to GitHub
+2. Go to https://streamlit.io/cloud
+3. Create a new app
+4. Add GROQ_API_KEY in secrets
+    GROQ_API_KEY = "your_groq_api_key_here"
 
-        Dhanaraj Kathirvel
-        AI & Full Stack Developer
+
+👨‍💻 Author
+Dhanaraj K
+AI & Full Stack Developer

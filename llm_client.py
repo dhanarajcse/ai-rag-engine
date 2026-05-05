@@ -45,7 +45,7 @@ def call_llm(prompt):
             GROQ_URL,
             headers=headers,
             json=payload,
-            timeout=30
+            timeout=60
         )
 
         # ❌ Handle HTTP errors early
