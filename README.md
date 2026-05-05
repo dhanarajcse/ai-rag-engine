@@ -118,6 +118,9 @@ GROQ_API_KEY="your_api_key_here"
 ---
 
 
-👨‍💻 Author
+## 👨‍💻 Author
+
+```
 Dhanaraj K
 Full Stack Developer
+```
